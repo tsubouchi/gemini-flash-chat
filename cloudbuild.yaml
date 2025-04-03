@@ -1,0 +1,32 @@
+# Next.js用のCloud Buildの設定
+steps:
+  # Dockerイメージのビルド
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'gcr.io/$PROJECT_ID/gemini-flash-chat', '.']
+  
+  # ビルドしたイメージをContainer Registryにプッシュ
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/$PROJECT_ID/gemini-flash-chat']
+  
+  # Cloud Runにデプロイ
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'deploy'
+      - 'gemini-flash-chat'
+      - '--image=gcr.io/$PROJECT_ID/gemini-flash-chat'
+      - '--platform=managed'
+      - '--region=us-central1'
+      - '--allow-unauthenticated'
+      - '--set-env-vars=NEXTAUTH_URL=https://gemini-flash-chat-xxxxx-uc.a.run.app,GOOGLE_CLIENT_ID=${_GOOGLE_CLIENT_ID},GOOGLE_CLIENT_SECRET=${_GOOGLE_CLIENT_SECRET},NEXTAUTH_SECRET=${_NEXTAUTH_SECRET}'
+
+# ビルドされたイメージをContainer Registryに保存
+images:
+  - 'gcr.io/$PROJECT_ID/gemini-flash-chat'
+
+# 置換変数の設定
+substitutions:
+  _GOOGLE_CLIENT_ID: 'your-google-client-id'
+  _GOOGLE_CLIENT_SECRET: 'your-google-client-secret'
+  _NEXTAUTH_SECRET: 'your-nextauth-secret'
